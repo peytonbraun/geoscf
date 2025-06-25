@@ -85,7 +85,7 @@ class GEOSCF:
                 save_path = os.path.join(timestamp.strftime(self.output_dir_pattern),save_fn)
                 ds.to_netcdf(save_path,format='NETCDF4')
                 #self.logger.info(f"Saving dataset to: {save_path}")
-                ds.close() #I CHANGED THIS PART !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                ds.close() #changed
                 if if_delete:
                     os.remove(local_path)
     
@@ -120,7 +120,7 @@ class GEOSCF:
                 #basically processes the file in chunks, which is more efficient for memory
                 for chunk in response.iter_content(chunk_size=chunk_size): 
                     f.write(chunk) #building up the file piece by piece
-        self.logger.info(f"Saved to: {local_path}")
+        #self.logger.info(f"Saved to: {local_path}")
         return local_path
     
     def download_files(self,fns,**kwargs):
@@ -151,10 +151,14 @@ class GEOSCF:
             self.logger.warning(f'{local_path} does not exist!')
             return
         ds = xr.open_dataset(local_path)
-        if lev_slice is None:
-            indexers = dict(lon=slice(west,east),lat=slice(south,north))
-        else:
-            indexers = dict(lon=slice(west,east),lat=slice(south,north),lev=lev_slice)
+        
+         # Always slice lon/lat by boundaries
+        indexers = dict(lon=slice(west, east), lat=slice(south, north))
+
+        # If lev_slice is given as a list of levels, select those levels explicitly
+        if lev_slice is not None:
+            indexers['lev'] = lev_slice  # select those exact levels
+        
         ds_sel = ds.sel(indexers)
         if variables is None:
             return ds_sel.load()
