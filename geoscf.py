@@ -1,17 +1,29 @@
 import os, sys, glob
-import requests
-import xarray as xr
+import logging
+try:
+    import requests
+    import xarray as xr
+except Exception as e:
+    logging.warning(e)
+    logging.warning("Downloading/subsetting won' t work")
+    
 import datetime as dt
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+
+try:
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+except Exception as e:
+    logging.warning(e)
+    logging.warning("Plotting on map won' t work")
+
 import numpy as np
 import pandas as pd
-import logging
 logging.basicConfig(level=logging.INFO)
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 from pathlib import Path
+
 class GEOSCF:
     def __init__(self, base_url='https://portal.nccs.nasa.gov/datashare/gmao/geos-cf/v1/das/', 
                  output_dir_pattern='GEOS_CF/Y%Y/M%m/D%d'):
@@ -32,7 +44,7 @@ class GEOSCF:
                             lev_slice_collection=[None, None],
                             variables_collection=[
                                 ['TROPCOL_CO', 'AOD550_BC', 'AOD550_OC', 'AOD550_DUST'],
-                                ['EMIS_BCPI_BB', 'EMIS_BCPP_BB', 'EMIS_OCPU_BB', 'EMIS_OCPO_BB']
+                                ['EMIS_BCPI', 'EMIS_BCPO', 'EMIS_OCPI', 'EMIS_OCPO','EMIS_CO']
                             ],
                             max_workers=2
                            ):
@@ -239,7 +251,6 @@ class GEOSCF:
         self.logger.error(f"All retries failed for {fn}")
         return None
 
-    
     def download_files_parallel_with_retry(self, fns, max_workers, **kwargs):
         '''
         Download multiple files in parallel using threads with retry logic.
